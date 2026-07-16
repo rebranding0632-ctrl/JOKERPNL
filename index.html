@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JOKER MASTER ADMIN</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-red: #FF0000;
+            --glow-red: rgba(255, 0, 0, 0.7);
+            --dark-bg: #020202;
+            --card-bg: rgba(15, 15, 15, 0.95);
+            --text-gold: #FFD700;
+            --text-white: #FFFFFF;
+            --success: #00FF88;
+            --info-blue: #00E5FF;
+            --purple-btn: #673AB7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--dark-bg);
+            background-image: linear-gradient(to bottom, #1a0000 0%, #020202 100%);
+            color: var(--text-white);
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+            padding-bottom: 100px;
+        }
+
+        h1, h2, h3, .card-title, .tab-btn, .btn-main, .slot-tag { font-family: 'Orbitron', sans-serif; text-transform: uppercase; letter-spacing: 2px; }
+        .stylish-gradient { background: linear-gradient(to right, #fff, var(--neon-red)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
+
+        .container { width: 100%; max-width: 500px; margin: 0 auto; padding: 15px; }
+
+        #loginOverlay { position: fixed; inset: 0; background: var(--dark-bg); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card {
+            background: var(--card-bg); padding: 40px 25px;
+            border: 2px solid var(--neon-red); border-radius: 25px;
+            text-align: center; width: 100%; max-width: 350px;
+            box-shadow: 0 0 40px var(--glow-red);
+        }
+
+        header {
+            background: rgba(0,0,0,0.9); backdrop-filter: blur(15px);
+            padding: 25px 15px; text-align: center; border-bottom: 3px solid var(--neon-red);
+            position: sticky; top: 0; z-index: 100;
+        }
+        header h1 { font-size: 1.6rem; color: var(--neon-red); text-shadow: 0 0 15px var(--glow-red); }
+
+        .tabs-nav { display: flex; gap: 4px; margin: 20px 0; background: #000; padding: 5px; border-radius: 15px; border: 1px solid #333; }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #555; padding: 14px 2px; cursor: pointer; border-radius: 10px; font-size: 0.55rem; font-weight: 700; transition: 0.4s; }
+        .tab-btn.active { background: var(--neon-red); color: white; box-shadow: 0 0 20px var(--glow-red); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: zoomIn 0.3s ease-out; }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        .card { background: var(--card-bg); border-radius: 20px; border: 1px solid #222; padding: 20px; margin-bottom: 25px; position: relative; }
+        .card-title { color: var(--text-gold); font-size: 0.9rem; margin-bottom: 20px; border-left: 5px solid var(--neon-red); padding-left: 15px; }
+
+        input, select {
+            width: 100%; background: #000; border: 1px solid #333;
+            color: #fff; padding: 14px; border-radius: 12px; margin-bottom: 12px;
+            font-size: 14px; font-family: 'Rajdhani'; outline: none;
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, #d32f2f, #ff1744);
+            color: white; border: none; padding: 16px; border-radius: 12px;
+            font-weight: 900; width: 100%; cursor: pointer; font-size: 0.9rem;
+        }
+
+        .limit-box { display: flex; align-items: center; gap: 10px; background: #0a0a0a; padding: 10px; border-radius: 12px; border: 1px solid #222; margin-bottom: 12px; }
+        .limit-label { font-size: 0.7rem; color: #666; font-family: 'Orbitron'; flex: 1; }
+        .limit-input-custom { width: 80px !important; background: #111 !important; border: 1px solid #444 !important; text-align: center; color: var(--neon-red) !important; font-family: 'Orbitron'; font-weight: 900; margin: 0 !important; padding: 8px !important; }
+
+        .slot-box { background: #080808; border-radius: 15px; padding: 15px; border: 1px solid #1a1a1a; margin-bottom: 15px; }
+        .slot-tag { font-size: 0.65rem; color: #444; font-weight: 900; margin-bottom: 10px; display: block; }
+
+        .list-header { color: var(--info-blue); font-family: 'Orbitron'; font-size: 1rem; margin: 30px 0 15px 0; display: flex; align-items: center; gap: 10px; }
+        .list-header::after { content: ""; flex: 1; height: 1px; background: #222; }
+
+        .item-card { background: #0a0a0a; border: 1px solid #222; border-radius: 15px; padding: 15px; margin-bottom: 15px; border-left: 3px solid var(--success); }
+        .item-name { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .item-url { font-size: 0.55rem; color: #444; word-break: break-all; margin-bottom: 12px; display: block; }
+
+        .btn-group { display: flex; gap: 6px; }
+        .btn-sml { flex: 1; padding: 10px; border: none; border-radius: 8px; font-family: 'Orbitron'; font-size: 0.6rem; font-weight: bold; color: white; cursor: pointer; }
+
+        .bg-del-app { background: var(--purple-btn); }
+        .bg-del-gh { background: #d32f2f; }
+
+        .key-box { background: #0a0a0a; border: 1px solid #222; border-radius: 15px; padding: 18px; margin-bottom: 15px; border-right: 4px solid var(--neon-red); position: relative; }
+        .key-val { font-size: 1.1rem; font-weight: 900; color: #fff; letter-spacing: 1px; }
+        .key-meta { font-size: 0.75rem; color: #666; line-height: 1.5; margin-top: 5px; }
+        .key-meta b { color: var(--info-blue); }
+
+        #globalStatus { position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(0,0,0,0.95); border: 2px solid var(--neon-red); color: white; padding: 18px; border-radius: 15px; text-align: center; z-index: 3000; display: none; font-family: 'Orbitron'; box-shadow: 0 0 30px var(--glow-red); }
+        .logout-btn { background: #222; border: none; color: #666; padding: 8px 15px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; margin-top: 10px; font-family: 'Orbitron'; }
+
+        #progressContainer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 4000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .p-circle { width: 150px; height: 150px; border-radius: 50%; border: 10px solid #222; border-top: 10px solid var(--neon-red); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-size: 2rem; color: white; margin-bottom: 20px; box-shadow: 0 0 20px var(--glow-red); }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay">
+    <div class="login-card">
+        <h2 class="stylish-gradient" style="font-size: 2.2rem;">JOKER MASTER</h2>
+        <p style="font-size: 0.7rem; color: #444; margin-bottom: 30px; letter-spacing: 4px;">SECURE SYSTEM ACCESS</p>
+        <input type="password" id="adminAccessKey" placeholder="ROOT PASSWORD" style="text-align: center;">
+        <button class="btn-main" onclick="validateAdmin()">LOGIN</button>
+        <p id="loginStatus" style="color: red; margin-top: 15px; font-size: 0.7rem; font-weight: bold;"></p>
+    </div>
+</div>
+
+<div id="progressContainer">
+    <div class="p-circle" id="progressVal">0%</div>
+    <div style="font-family: 'Orbitron'; color: var(--neon-red); font-size: 0.8rem; letter-spacing: 2px;">UPLOADING...</div>
+</div>
+
+<div id="mainDashboard" style="display:none;">
+    <header>
+        <h1 class="stylish-gradient">JOKER CONTROL CENTER</h1>
+        <div id="adminTimer" style="font-size: 0.8rem; color: gold; font-weight: 700; margin-top:5px;">---</div>
+        <button class="logout-btn" onclick="performLogout()">LOGOUT</button>
+    </header>
+
+    <div class="container">
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="openTab('keysTab', this)">LICENSES</button>
+            <button class="tab-btn" onclick="openTab('luaTab', this)">LUA ENGINE</button>
+            <button class="tab-btn" onclick="openTab('obbTab', this)">OBB CORE</button>
+            <button class="tab-btn" onclick="openTab('noticeTab', this)">NOTICE</button>
+        </div>
+
+        <div id="keysTab" class="tab-content active">
+            <div class="card">
+                <div class="card-title">GENERATE TOKEN</div>
+                <input type="text" id="usernameBase" placeholder="USER NAME">
+                <input type="text" id="customKey" placeholder="CUSTOM TOKEN">
+                <div class="limit-box"><span class="limit-label">DEVICE LIMIT</span><input type="number" id="deviceLimit" class="limit-input-custom" value="1"></div>
+                <div class="limit-box"><span class="limit-label">DURATION</span><input type="number" id="durationValue" class="limit-input-custom" value="1"><select id="durationUnit" style="flex:1; background:#000; color:white; border:1px solid #333; height:38px; border-radius:10px; margin-left:10px;"><option value="hours">HOURS</option><option value="days" selected>DAYS</option><option value="months">MONTHS</option><option value="lifetime">LIFE</option></select></div>
+                <button class="btn-main" onclick="generateKey()">GENERATE ACCESS ⚡</button>
+            </div>
+            <h3 class="list-header">ACTIVE KEYS</h3>
+            <div id="keysList"></div>
+        </div>
+
+        <div id="luaTab" class="tab-content"><div id="luaSlotsContainer"></div><h3 class="list-header">LUA LIST (IN APP)</h3><div id="luaAppList"></div></div>
+        <div id="obbTab" class="tab-content"><div id="obbSlotsContainer"></div><h3 class="list-header">OBB LIST (IN APP)</h3><div id="obbAppList"></div></div>
+        <div id="noticeTab" class="tab-content"><div class="card"><div class="card-title">NOTICE</div><input type="text" id="noticeTitle" placeholder="TITLE"><textarea id="noticeMessage" rows="5" placeholder="MESSAGE..."></textarea><button class="btn-main" onclick="publishNotice()">PUBLISH 📢</button></div></div>
+
+        <div class="card" style="background:#1a0000; border-color:red;"><div class="card-title" style="color:red; font-size:0.7rem;">SETTINGS</div><input type="password" id="ghToken" placeholder="GitHub Token"><button class="btn-main" style="background:#222;" onclick="saveGhConfig()">SAVE</button></div>
+    </div>
+</div>
+
+<div id="globalStatus"></div>
+
+<script>
+    const SB_URL = "https://lqilqrytzaefxxbzdlqw.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxaWxxcnl0emFlZnh4YnpkbHF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzE3MTAsImV4cCI6MjA5OTcwNzcxMH0.sxmpaTDkqK5vyHYWfOfdzbc9sU8e52RWVCv-30-7Wuw";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    window.onload = async () => { const savedKey = localStorage.getItem('admin_session_key'); if(savedKey) { document.getElementById('adminAccessKey').value = savedKey; await validateAdmin(true); } };
+
+    async function validateAdmin(isAuto = false) {
+        const key = document.getElementById('adminAccessKey').value.trim();
+        if(!key) return;
+        const { data } = await _supabase.from('admin_access').select('*').eq('admin_key', key).single();
+        if(data && data.is_active) {
+            if(data.expires_at && new Date(data.expires_at) < new Date()) { localStorage.removeItem('admin_session_key'); return; }
+            localStorage.setItem('admin_session_key', key);
+            document.getElementById('loginOverlay').style.display='none';
+            document.getElementById('mainDashboard').style.display='block';
+            startSessionTimer(data.expires_at); loadGhConfig(); fetchAllData();
+        } else { if(!isAuto) document.getElementById('loginStatus').innerText = "DENIED! ❌"; }
+    }
+
+    function performLogout() { localStorage.removeItem('admin_session_key'); location.reload(); }
+
+    function startSessionTimer(expiry) {
+        if(!expiry) { document.getElementById('adminTimer').innerText = "LIFETIME ACCESS ✅"; return; }
+        setInterval(() => {
+            const diff = new Date(expiry).getTime() - new Date().getTime();
+            if(diff <= 0) performLogout();
+            const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+            document.getElementById('adminTimer').innerText=`EXPIRES: ${Math.floor(h/24)}d ${h%24}h ${m}m ${s}s`;
+        }, 1000);
+    }
+
+    async function fetchAllData() {
+        const lua = await _supabase.from('config').select('*').order('created_at', { ascending: false });
+        const obb = await _supabase.from('obb_config').select('*').order('created_at', { ascending: false });
+        renderSlots('lua'); renderSlots('obb');
+        renderAppList('lua', lua.data || []); renderAppList('obb', obb.data || []);
+        fetchKeys();
+    }
+
+    function renderSlots(type) {
+        const container = document.getElementById(type + 'SlotsContainer'); container.innerHTML = "";
+        for(let i=1; i<=5; i++) {
+            const slotId = `${type}_${i}`; const savedRepo = localStorage.getItem('repo_' + slotId) || "";
+            container.innerHTML += `<div class="slot-box"><span class="slot-tag">UPLOAD SLOT 0${i}</span><input type="text" id="repo_${slotId}" placeholder="User/Repo" value="${savedRepo}" onchange="localStorage.setItem('repo_${slotId}', this.value)"><input type="text" id="name_${slotId}" placeholder="App Name"><input type="file" id="file_${slotId}"><button class="btn-main" style="padding:10px; font-size:0.7rem;" onclick="handleUpload('${type}', ${i})">UPLOAD ROOT ☁️</button></div>`;
+        }
+    }
+
+    function renderAppList(type, data) {
+        const container = document.getElementById(type + 'AppList');
+        container.innerHTML = data.map(item => `<div class="item-card"><div class="item-name">${item.name}</div><span class="item-url">${item.download_url}</span><div class="btn-group"><button class="btn-sml bg-del-app" onclick="handleRemoveAppOnly('${type}', ${item.id})">DEL FROM TOOL</button><button class="btn-sml bg-del-gh" onclick="handleFullWipe('${type}', ${item.id}, '${item.download_url}')">FULL WIPE</button></div></div>`).join('');
+    }
+
+    async function handleUpload(type, slot) {
+        const id=`${type}_${slot}`, token=localStorage.getItem('gh_token'), repo=document.getElementById('repo_'+id).value.trim(), name=document.getElementById('name_'+id).value.trim(), fileInput=document.getElementById('file_'+id);
+        if(!token||!repo||!name||!fileInput.files[0]) return showStatus("Fill all fields!","red");
+        const file = fileInput.files[0]; document.getElementById('progressContainer').style.display='flex';
+        const reader = new FileReader(); reader.readAsArrayBuffer(file);
+        reader.onload = async function() {
+            try {
+                const bytes=new Uint8Array(reader.result); let binary=''; for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+                const base64=window.btoa(binary); const fileName = file.name.replace(/\s+/g, '_');
+                const ghUrl=`https://api.github.com/repos/${repo}/contents/${fileName}`;
+                let sha=""; const check=await fetch(ghUrl,{headers:{'Authorization':`token ${token}`}}); if(check.ok){const m=await check.json(); sha=m.sha;}
+                const res=await fetch(ghUrl,{method:'PUT',headers:{'Authorization':`token ${token}`},body:JSON.stringify({message:"Joker",content:base64,sha:sha})});
+                if(res.ok){
+                    const rawUrl=`https://raw.githubusercontent.com/${repo}/main/${fileName}?t=${Date.now()}`;
+                    await _supabase.from(type==='lua'?'config':'obb_config').insert([{name, download_url:rawUrl, version:type.toUpperCase()}]);
+                    showStatus("✅ SUCCESS!","green"); fetchAllData();
+                } else showStatus("❌ FAILED","red");
+            } catch (e) { showStatus("❌ ERROR","red"); }
+            document.getElementById('progressContainer').style.display='none';
+        };
+    }
+
+    async function handleRemoveAppOnly(type, dbId) { await _supabase.from(type === 'lua' ? 'config' : 'obb_config').delete().eq('id', dbId); fetchAllData(); }
+    async function handleFullWipe(type, dbId, rawUrl) {
+        if(!confirm("FULL WIPE?")) return;
+        const token = localStorage.getItem('gh_token');
+        const repo = rawUrl.split('raw.githubusercontent.com/')[1].split('/').slice(0, 2).join('/');
+        const fileName = rawUrl.split('/').pop().split('?')[0];
+        await _supabase.from(type === 'lua' ? 'config' : 'obb_config').delete().eq('id', dbId);
+        if(token) {
+            const ghUrl = `https://api.github.com/repos/${repo}/contents/${fileName}`;
+            const check = await fetch(ghUrl, { headers: { 'Authorization': `token ${token}` } });
+            if(check.ok) { const m = await check.json(); await fetch(ghUrl, { method: 'DELETE', headers: { 'Authorization': `token ${token}` }, body: JSON.stringify({ message: "Clean", sha: m.sha }) }); }
+        }
+        fetchAllData();
+    }
+
+    async function generateKey() {
+        const u = document.getElementById('usernameBase').value.toUpperCase();
+        let k = document.getElementById('customKey').value.toUpperCase();
+        if(!k) k = u ? u+'-'+Math.random().toString(36).substring(2,6).toUpperCase() : 'JOKER-'+Math.random().toString(36).substring(2,10).toUpperCase();
+        const lim = parseInt(document.getElementById('deviceLimit').value), val = parseInt(document.getElementById('durationValue').value), unit = document.getElementById('durationUnit').value;
+        let exp = null; if(unit !== 'lifetime') { let d = new Date(); if(unit === 'hours') d.setHours(d.getHours()+val); else if(unit === 'days') d.setDate(d.getDate()+val); else if(unit === 'months') d.setMonth(d.getMonth()+val); exp = d.toISOString(); }
+        await _supabase.from('keys').insert([{ key: k, device_limit: lim, expires_at: exp }]); fetchKeys();
+    }
+
+    async function fetchKeys() {
+        const { data } = await _supabase.from('keys').select('*').order('created_at', { ascending: false });
+        const list = document.getElementById('keysList'); list.innerHTML = "";
+        data.forEach(item => {
+            const dev = item.device_ids ? item.device_ids.split(',').filter(x => x) : [];
+            list.innerHTML += `<div class="key-box"><div class="key-val">${item.key}</div><div class="key-meta">EXP: <b>${item.expires_at?new Date(item.expires_at).toLocaleString():'LIFETIME'}</b><br>LIMIT: <b>${dev.length}/${item.device_limit}</b></div><div style="display:flex; gap:5px; margin-top:10px;"><button class="btn-sml bg-del-app" style="background:#333;" onclick="copyKey('${item.key}')">COPY</button><button class="btn-sml bg-del-app" onclick="resetKey(${item.id})">RESET</button><button class="btn-sml bg-del-gh" onclick="delKey(${item.id})">DEL</button></div></div>`;
+        });
+    }
+    async function resetKey(id) { await _supabase.from('keys').update({ device_ids: null }).eq('id', id); fetchKeys(); }
+    async function delKey(id) { await _supabase.from('keys').delete().eq('id', id); fetchKeys(); }
+    function copyKey(t) { navigator.clipboard.writeText(t); showStatus("COPIED!", "gold"); }
+    function showStatus(msg, col) { const s = document.getElementById('globalStatus'); s.innerText = msg; s.style.display = 'block'; s.style.borderLeft = `8px solid ${col}`; setTimeout(() => s.style.display = 'none', 4000); }
+    function saveGhConfig() { localStorage.setItem('gh_token', document.getElementById('ghToken').value); showStatus("SAVED!", "green"); }
+    function loadGhConfig() { document.getElementById('ghToken').value = localStorage.getItem('gh_token') || ""; }
+    function openTab(t, b) { document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active')); document.getElementById(t).classList.add('active'); b.classList.add('active'); if(t!=='keysTab') fetchAllData(); }
+</script>
+</body>
+</html>
